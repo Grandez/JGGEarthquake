@@ -1,0 +1,238 @@
+---
+title: "jggEarthquake"
+author: "Javier Gonzalez <javier.gonzalez.grandez@gmail.com"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{jggEarthquake}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# jggEarthquake package
+
+The functions provided by this package use data from the [U.S. National Oceanographic and Atmospheric Administration (NOAA)](https://www.ngdc.noaa.gov/nndc/struts/form?t=101650&s=1&d=1) Significant Earthquake Database. 
+
+## Required set-up for this package
+
+Currently, this package exists in a development version on GitHub. To use the package, you need to install it directly from GitHub using the `install_github` function from `devtools`. 
+
+You can use the following code to install the development version of `jggEarthquake`: 
+
+```R
+library(devtools)
+install_github("grandez/jggEarthquake")
+library(jggEarthquake)
+```
+
+[//]: # (In addition the following libraries are required:)
+
+[//]: # (```R              )
+[//]: # (library(tidyr)    )
+[//]: # (library(dplyr)    )
+[//]: # (library(lubridate))
+[//]: # (library(stringr)  )
+[//]: # (library(grid)     )
+[//]: # (library(ggplot2)  )
+[//]: # (library(leaflet)  )
+[//]: # (```               )
+
+## Sample data included with the package
+
+Users may access a sample dataframe by running the code below. 
+
+```R
+eq_data_raw
+```
+
+The raw data file for this data frame is in tab delimited format can be accessed (and saved to your currrent working directory) by running the following:
+
+```R
+data_raw <-system.file("extdata", "signif.txt", package = "jggEarthquake")
+file.copy(from=c(data_raw),to=getwd())
+data_raw_wd <- fread("./signif.txt")
+```
+## Functions
+
+### Basic functions
+
+According the requirements of project, following functions are available:
+
+* Data tidying functions:
+     + `eq_get_data`
+     + `eq_clean_data`
+     + `eq_location_clean`
+* Geom for creating visualisations:
+     + `geom_timeline`
+     + `geom_timeline_label`
+
+### Wrapper functions
+
+But to simplify the use some *wrappers* has been added:
+
+* **eq_load_data**: Load and prepare data for visualizations
+* **eq_geom_timeline**: Generate the plot associated using geom_timeline
+* **eq_geom_timeline_label**: Generate the plot associated using 
+Use of these functions are shown below.
+
+### Functions detail
+
+#### eq_get_data
+
+Takes the raw data set from NOAA server or from local system
+
+```R
+# Download data set from Server
+data_raw <- eq_get_data()
+
+# Load data set from local
+data_raw_wd <- eq_get_data("inst/extdata/signif.txt")
+
+```
+
+#### eq_clean_data
+
+Takes the raw data set and make it tidy.
+Include new fields; DATE, LATITUDE, LONGITUDE and RITCHER as primary magnitude
+
+```R
+data_clean <- eq_clean_data(data_raw)
+
+```
+
+#### eq_location_clean
+
+Takes the raw data set and modified the column LOCATION_NAME to strip out country names and reformats to title case. 
+It is automatically called from eq_clean_data
+
+```R
+data_loc = eq_location_clean(data_raw)
+
+````
+
+#### eq_load_data
+
+Wrapper to eq_get_data + eq_clean_data
+
+```R
+# Download data set from Server
+data_clean <- eq_load_data()
+# Load data set from local
+data_clean <- eq_load_data("inst/extdata/signif.txt")
+
+```
+
+### geom_timeline
+
+A ggplot2 graphical function to plot a timeline of earthquakes from cleaned data. The plot indicates the magnitude of each earthquake and number of deaths.
+
+Aesthetics supported:
+
+* x    = DATE (Mandatory)
+* y    = List of countries, by default no countries
+* xmin = Begin of year starting at 0 (Default)
+* xmax = End of year, by default the last Earthquake in data set
+
+```R
+ggplot(data_clean) +
+     geom_timeline(aes(x=date
+                      ,y=COUNTRY
+                      ,colour=DEATHS
+                      ,fill=DEATHS
+                      ,size=RITCHER
+                      ,xmin = 2000
+                      ,xmax = 2016
+                      )
+                  )
+```
+
+#### geom_timeline_label
+
+A ggplot2 graphical function to plot a timeline of earthquakes from cleaned data adding labels to n-largest earthquakes by magnitude.
+
+Aesthetics supported:
+
+* x    = DATE (Mandatory)
+* nmax = Number of labels to show according its magnitude (Mandatory)
+* y    = List of countries, by default no countries
+* xmin = Begin of year starting at 0 (Default)
+* xmax = End of year, by default the last Earthquake in data set
+
+
+```R
+ggplot(data_clean) +
+     geom_timeline_label(aes(x=date
+                      ,y=COUNTRY
+                      ,colour=DEATHS
+                      ,fill=DEATHS
+                      ,size=RITCHER
+                      ,xmin = 2000
+                      ,xmax = 2016
+                      ,nmax = 5
+                      )
+                  )
+```
+
+#### eq_geom_timeline
+
+A wrapper function to help generate timeline visualisations easier.
+Parameters:
+
+* Data frame (Mandatory)
+* xmin 
+* xmax
+* countries
+
+```R
+eq_geom_timeline(eq_data_clean, xmin=0, xmax=2016, countries=c("USA", "CHINA"))
+```
+
+### eq_geom_timeline_label
+
+A wrapper function to help generate timeline with labels visualisations easier.
+
+Parameters:
+
+* Data frame (Mandatory)
+* namx (Mandatory)
+* xmin 
+* xmax
+* countries
+
+```R
+eq_geom_timeline_label(eq_data_clean
+                      ,xmin=0
+                      ,xmax=2016
+                      ,nmax=5
+                      ,countries=c("USA", "CHINA"))
+```
+
+### eq_map
+
+A function to generate an interactive map showing earthquakes for a particular country. The user specifies a column from the data which the earthquake is to be annotated by eg date.
+
+```R
+eq_clean_data(eq_data_raw) %>% 
+     dplyr::filter(COUNTRY == "MEXICO" & lubridate::year(date) >= 2000) %>% 
+     eq_map(annot_col="date")
+```
+
+### eq_create_label
+
+A function to generate a custom popup box for a selected earthquake showing location, magnitude and total deaths.
+
+```R
+eq_clean_data(eq_data_raw) %>% 
+     eq_location_clean() %>% 
+     dplyr::filter(COUNTRY == "MEXICO" & lubridate::year(date) >= 2000) %>% 
+     dplyr::mutate(popup_text = eq_create_label(.)) %>% 
+     eq_map(annot_col="popup_text")
+```
+
+## Miscellaneous
+
+The package also contains a new theme `theme_timeline` for use with `geom_timeline` and `geom_timeline_label`. It is applied automatically when using `get_timeline` and `get_timeline_label`.
+
+There are two custom grobs and a custom stat included with the package which are used by the `geom_` functions. These are `geomTimeline`, `geomTimelineLabel` and `StatTimeline`.
+
+
