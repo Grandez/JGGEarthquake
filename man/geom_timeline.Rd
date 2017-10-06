@@ -47,15 +47,18 @@ The plot indicates the magnitude of each earthquake and number of deaths.
 }
 
 \examples{
-library(dplyr)
+\dontrun{
 library(ggplot2)
-    ggplot(df) +
-    geom_timeline(aes(x = DATE,
-                      y = COUNTRY,
-                      colour = DEATHS,
-                      size = RITCHER,
-                      fill = DEATHS,
-                      xmin = 2000,
-                      xmax = 2010)
+dmin = as.Date("2000-01-01", format="\%Y-\%m-\%d")
+dmax = as.Date("2017-01-01", format="\%Y-\%m-\%d")
+ggplot(df) +
+geom_timeline(aes(x=DATE,
+                  colour=DEATHS,
+                  size=RITCHER,
+                  fill=DEATHS,
+                  xmin=dmin,
+                  xmax=dmax)
+             )
+}
 
 }

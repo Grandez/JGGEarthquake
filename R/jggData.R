@@ -1,9 +1,13 @@
 library(tidyr,quietly=T, warn.conflicts=F)
-library(dplyr,quietly=T, warn.conflicts=F)
 library(data.table,quietly=T, warn.conflicts=F)
-library(stringi, quietly=T, warn.conflicts=F)
 library(lubridate, quietly=T, warn.conflicts=F)
 
+
+if(getRversion() >= "3.0.0") {
+    utils::globalVariables(c("YEAR","MONTH","DAY","LONGITUDE","LATITUDE",
+                             "LOCATION_NAME","COUNTRY","DEATHS","RITCHER",
+                             "INJURIES", "EQ_PRIMARY"))
+}
 
 #' @title       eq_get_data
 #' @description load the file
@@ -23,7 +27,7 @@ eq_get_data <- function(filename=NULL) {
     fileUrl = "https://www.ngdc.noaa.gov/nndc/struts/results?type_0=Exact&query_0=$ID&t=101650&s=13&d=189&dfn=signif.txt"
     download.file(fileUrl, destfile=filename, method="curl", quiet=T)
   }
-  fread(filename)
+  data.table::fread(filename)
 }
 
 #' @title       eq_clean_data
@@ -43,16 +47,19 @@ eq_get_data <- function(filename=NULL) {
 #' dt = eq_clean_data(dataframe)
 #' }
 
+
 #' @export
 eq_clean_data <- function(df) {
   dt <- eq_location_clean(df) %>%
-        select(-starts_with("TOTAL"), -contains("DESCRIPTION"), -contains("HOUSES")) %>%     # Remove some columns
-        drop_na(YEAR, MONTH, DAY, EQ_PRIMARY) %>%                                            # Remove NA values
+        dplyr::select(-dplyr::starts_with("TOTAL"),
+                      -dplyr::contains("DESCRIPTION"),
+                      -dplyr::contains("HOUSES")) %>%     # Remove some columns
+        tidyr::drop_na(YEAR, MONTH, DAY, EQ_PRIMARY) %>%                                            # Remove NA values
         subset(YEAR > 0) %>%                                                                 # Remove negative years
-        mutate(DATE = as.Date(sprintf("%04d-%02d-%02d",YEAR, MONTH, DAY), format="%Y-%m-%d"),
+        dplyr::mutate(DATE = as.Date(sprintf("%04d-%02d-%02d",YEAR, MONTH, DAY), format="%Y-%m-%d"),
                RITCHER = EQ_PRIMARY
               ) %>%
-        select(DATE, COUNTRY, LOCATION_NAME, RITCHER, DEATHS, INJURIES, LATITUDE, LONGITUDE)
+        dplyr::select(DATE, COUNTRY, LOCATION_NAME, RITCHER, DEATHS, INJURIES, LATITUDE, LONGITUDE)
 
   # Set data types
   dt$LATITUDE = as.numeric(dt$LATITUDE)
@@ -77,7 +84,7 @@ eq_clean_data <- function(df) {
 
 eq_location_clean <- function(df) {
     df %>%
-        mutate(LOCATION_NAME =
+        dplyr::mutate(LOCATION_NAME =
                stringr::str_to_title(base::gsub("[^;\n]+[:]","",LOCATION_NAME)))
 }
 

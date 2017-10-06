@@ -1,16 +1,16 @@
-library(ggplot2)
-library(grid)
+require(ggplot2)
+require(grid)
 
 #############################################################################
 #  PUBLIC FUNCTIONS
 #############################################################################
 
 
-#if(getRversion() >= "3.0.0") {
-#  utils::globalVariables(c("YEAR","MONTH","DAY","LONGITUDE","LATITUDE",
-#                           "LOCATION_NAME","COUNTRY","DEATHS","EQ_PRIMARY",
-#                           "datetime","year","date_s1","bcyear"))
-#}
+if(getRversion() >= "3.0.0") {
+  utils::globalVariables(c("YEAR","MONTH","DAY","LONGITUDE","LATITUDE",
+                           "LOCATION_NAME","COUNTRY","DEATHS","RITCHER",
+                           "EQ_PRIMARY", "DATE"))
+}
 
 #' geom_timeline
 #'
@@ -41,21 +41,24 @@ library(grid)
 #' @export
 #'
 #' @examples
-#' library(dplyr)
+#'\dontrun{
 #' library(ggplot2)
-#'     ggplot(df) +
-#'     geom_timeline(aes(x = DATE,
-#'                       y = COUNTRY,
-#'                       colour = DEATHS,
-#'                       size = RITCHER,
-#'                       fill = DEATHS,
-#'                       xmin = 2000,
-#'                       xmax = 2010)
+#' dmin = as.Date("2000-01-01", format="%Y-%m-%d")
+#' dmax = as.Date("2017-01-01", format="%Y-%m-%d")
+#' ggplot(df) +
+#' geom_timeline(aes(x=DATE,
+#'                   colour=DEATHS,
+#'                   size=RITCHER,
+#'                   fill=DEATHS,
+#'                   xmin=dmin,
+#'                   xmax=dmax)
+#'              )
+#'}
 #'
 geom_timeline <- function(mapping = NULL, data = NULL, stat = "identity",
                           position = "identity", na.rm = FALSE,
                           show.legend = NA, inherit.aes = TRUE, ...) {
-  layer(
+  ggplot2::layer(
     stat = StatTimeline, geom = GeomTimeline, mapping = mapping,
     data = data,  position = position,
     show.legend = show.legend, inherit.aes = inherit.aes,
@@ -94,20 +97,21 @@ geom_timeline <- function(mapping = NULL, data = NULL, stat = "identity",
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' library(ggplot2)
 #'     ggplot(df) +
 #'     geom_timeline_label(aes(x = DATE,
 #'                             location = LOCATION_NAME,
-#'                             xmin = 2000,
-#'                             xmax = 2010,
+#'                             xmin = as.Date("2000-01-01", format="%Y-%m-%d"),
+#'                             xmax = as.Date("2017-01-01", format="%Y-%m-%d"),
 #'                             size=RITCHER,
-#'                             n_max=5,
-#'                             y=COUNTRY))
+#'                             n_max=5))
+#'}
 #'
 geom_timeline_label <- function(mapping = NULL, data = NULL, stat = "identity",
                                 position = "identity", na.rm = FALSE,
                                 show.legend = NA, inherit.aes = TRUE, ...) {
-  layer(
+  ggplot2::layer(
     geom = geomTimelineLabel, stat = StatTimeline, mapping = mapping,
     data = data,  position = position,
     show.legend = show.legend, inherit.aes = inherit.aes,
@@ -172,7 +176,6 @@ geomTimelineLabel <- ggproto("geomTimelineLable", Geom,
 #' @rdname Earthquake-ggproto
 #' @format NULL
 #' @usage NULL
-# @importFrom dplyr filter
 StatTimeline <- ggproto("StatTimeline", Stat
                         ,required_aes = c("x")
                         ,optional_aes=c("xmin", "xmax")
@@ -183,7 +186,7 @@ StatTimeline <- ggproto("StatTimeline", Stat
                             list(
                                 min = dmin,
                                 max = dmax,
-                                na.rm = params$na.rm
+                                na.rm = TRUE
                             )
                         }
                         ,compute_group = function(data, scales, min, max) {

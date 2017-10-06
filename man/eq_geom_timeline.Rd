@@ -4,14 +4,15 @@
 \alias{eq_geom_timeline}
 \title{eq_geom_timeline}
 \usage{
-eq_geom_timeline(df, xmin = 1, xmax = year(Sys.Date()), countries = "")
+eq_geom_timeline(df, nmin = 1, nmax = lubridate::year(Sys.Date()),
+  countries = "")
 }
 \arguments{
 \item{df}{A data table containing NOAA Earthquake processed}
 
-\item{xmin}{minimum year as numeric}
+\item{nmin}{minimum year as numeric}
 
-\item{xmax}{maximum year as numeric}
+\item{nmax}{maximum year as numeric}
 
 \item{countries}{Vector of countries to filter}
 }
@@ -24,6 +25,6 @@ A wrapper function to simplify use of geom_timeline
 \examples{
 \dontrun{
 eq_geom_timeline(df)
-eq_geom_timeline(df,xmin=2000,xmax=2015, countries=c("USA","IRAN"))
+eq_geom_timeline(df,nmin=2000,nmax=2015, countries=c("USA","IRAN"))
 }
 }

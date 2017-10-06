@@ -4,19 +4,19 @@
 \alias{eq_geom_timeline_label}
 \title{eq_geom_timeline_label}
 \usage{
-eq_geom_timeline_label(df, xmin = 1, xmax = year(Sys.Date()), nmax = 5,
-  countries = "")
+eq_geom_timeline_label(df, nmin = 1, nmax = lubridate::year(Sys.Date()),
+  n_max = 5, countries = "")
 }
 \arguments{
 \item{df}{A data table containing NOAA Earthquake processed}
 
-\item{xmin}{minimum year as numeric}
+\item{nmin}{minimum year as numeric}
 
-\item{xmax}{maximum year as numeric}
-
-\item{countries}{Vector of countries to filter}
+\item{nmax}{maximum year as numeric}
 
 \item{n_max}{Integer value to control number of labels per group to show}
+
+\item{countries}{Vector of countries to filter}
 }
 \value{
 A ggplot2 graphical object displaying timeline of earthquakes data

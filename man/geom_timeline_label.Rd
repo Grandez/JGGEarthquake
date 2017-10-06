@@ -48,14 +48,15 @@ Best used with `eq_location_clean`.
 }
 
 \examples{
+\dontrun{
 library(ggplot2)
     ggplot(df) +
     geom_timeline_label(aes(x = DATE,
                             location = LOCATION_NAME,
-                            xmin = 2000,
-                            xmax = 2010,
+                            xmin = as.Date("2000-01-01", format="\%Y-\%m-\%d"),
+                            xmax = as.Date("2017-01-01", format="\%Y-\%m-\%d"),
                             size=RITCHER,
-                            n_max=5,
-                            y=COUNTRY))
+                            n_max=5))
+}
 
 }

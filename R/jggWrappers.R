@@ -1,3 +1,5 @@
+require(ggplot2)
+
 #' @title       eq_load_data
 #' @description dowload and clean the earthquakes file from NOAA
 #'              This is a wrapper for eq_get_data and eq_clean_data
@@ -18,8 +20,8 @@ eq_load_data <- function(filename=NULL) {
 #' A wrapper function to simplify use of geom_timeline
 #'
 #' @param df A data table containing NOAA Earthquake processed
-#' @param xmin minimum year as numeric
-#' @param xmax maximum year as numeric
+#' @param nmin minimum year as numeric
+#' @param nmax maximum year as numeric
 #' @param countries Vector of countries to filter
 #'
 #'
@@ -29,9 +31,11 @@ eq_load_data <- function(filename=NULL) {
 #' @examples
 #' \dontrun{
 #' eq_geom_timeline(df)
-#' eq_geom_timeline(df,xmin=2000,xmax=2015, countries=c("USA","IRAN"))
+#' eq_geom_timeline(df,nmin=2000,nmax=2015, countries=c("USA","IRAN"))
 #' }
-eq_geom_timeline <- function(df, xmin=1, xmax=year(Sys.Date()), countries = "") {
+eq_geom_timeline <- function(df, nmin=1,
+                                 nmax=lubridate::year(Sys.Date()),
+                                 countries = "") {
 
     type = jgg_CheckDataType(df)
 
@@ -39,48 +43,48 @@ eq_geom_timeline <- function(df, xmin=1, xmax=year(Sys.Date()), countries = "") 
         stop("Data must be either a data.frame or the name of a file")
     }
 
-    if (class(xmin) != "numeric" || class(xmax) != "numeric") {
-        stop("xmin and xmax must be and integer positive")
+    if (class(nmin) != "numeric" || class(nmax) != "numeric") {
+        stop("nmin and nmax must be and integer positive")
     }
-    if (xmin < 0 || xmax < 1) {
-        stop("xmin and xmax must be and integer positive")
+    if (nmin < 0 || nmax < 1) {
+        stop("nmin and nmax must be and integer positive")
     }
 
-    dmin <- as.Date(sprintf("%04d-%02d-%02d", xmin,  1,  1), format="%Y-%m-%d")
-    dmax <- as.Date(sprintf("%04d-%02d-%02d", xmax, 12, 31), format="%Y-%m-%d")
+    dmin <- as.Date(sprintf("%04d-%02d-%02d", nmin,  1,  1), format="%Y-%m-%d")
+    dmax <- as.Date(sprintf("%04d-%02d-%02d", nmax, 12, 31), format="%Y-%m-%d")
 
     if (!(countries[1] == "")) {
-        filter(df, COUNTRY %in% countries)  %>%
-            ggplot() +
-            geom_timeline(aes(x=DATE
-                             ,y=COUNTRY
-                             ,colour=DEATHS
-                             ,size=RITCHER
-                             ,fill=DEATHS
-                             ,xmin = dmin
-                             ,xmax = dmax)
+        dplyr::filter(df, COUNTRY %in% countries)  %>%
+            ggplot2::ggplot() +
+            geom_timeline(ggplot2::aes(x=DATE,
+                              y=COUNTRY,
+                              colour=DEATHS,
+                              size=RITCHER,
+                              fill=DEATHS,
+                              xmin = dmin,
+                              xmax = dmax)
                          ) +
-            scale_size_continuous(name = "Richter scale values") +
-            scale_fill_continuous(name = "# Deaths") +
-            scale_colour_continuous(name = "# Deaths") +
-            scale_alpha_continuous(name = "# Deaths")  +
+            ggplot2::scale_size_continuous(name = "Richter scale values") +
+            ggplot2::scale_fill_continuous(name = "# Deaths") +
+            ggplot2::scale_colour_continuous(name = "# Deaths") +
+            ggplot2::scale_alpha_continuous(name = "# Deaths")  +
             theme_timeline +
-            xlab("DATE")
+            ggplot2::xlab("DATE")
     } else {
-        ggplot(df) +
-            geom_timeline(aes(x=DATE
-                             ,colour=DEATHS
-                             ,size=RITCHER
-                             ,fill=DEATHS
-                             ,xmin = dmin
-                             ,xmax = dmax)
-                          )
-           scale_size_continuous(name = "Richter scale values") +
-           scale_fill_continuous(name = "# Deaths") +
-           scale_colour_continuous(name = "# Deaths") +
-           scale_alpha_continuous(name = "# Deaths") +
+        ggplot2::ggplot(df) +
+            geom_timeline(ggplot2::aes(x=DATE,
+                              colour=DEATHS,
+                              size=RITCHER,
+                              fill=DEATHS,
+                              xmin = dmin,
+                              xmax = dmax)
+                          ) +
+            ggplot2::scale_size_continuous(name = "Richter scale values") +
+            ggplot2::scale_fill_continuous(name = "# Deaths") +
+            ggplot2::scale_colour_continuous(name = "# Deaths") +
+            ggplot2::scale_alpha_continuous(name = "# Deaths") +
            theme_timeline +
-           xlab("DATE")
+           ggplot2::xlab("DATE")
     }
 }
 
@@ -89,8 +93,8 @@ eq_geom_timeline <- function(df, xmin=1, xmax=year(Sys.Date()), countries = "") 
 #' A wrapper function to simplify use of geom_timeline
 #'
 #' @param df A data table containing NOAA Earthquake processed
-#' @param xmin minimum year as numeric
-#' @param xmax maximum year as numeric
+#' @param nmin minimum year as numeric
+#' @param nmax maximum year as numeric
 #' @param countries Vector of countries to filter
 #' @param n_max Integer value to control number of labels per group to show
 #'
@@ -102,7 +106,10 @@ eq_geom_timeline <- function(df, xmin=1, xmax=year(Sys.Date()), countries = "") 
 #' \dontrun{
 #' eq_geom_timeline_label(df, n_max=5, xmin=2000, xmax=2015, countries=c("USA","CHINA"))
 #' }
-eq_geom_timeline_label <- function(df, xmin=1, xmax=year(Sys.Date()), nmax=5, countries = "") {
+eq_geom_timeline_label <- function(df, nmin=1,
+                                       nmax=lubridate::year(Sys.Date()),
+                                       n_max=5,
+                                       countries = "") {
 
     type = jgg_CheckDataType(df)
 
@@ -110,50 +117,53 @@ eq_geom_timeline_label <- function(df, xmin=1, xmax=year(Sys.Date()), nmax=5, co
         stop("Data must be either a data.frame or the name of a file")
     }
 
-    if (class(xmin) != "numeric" || class(xmax) != "numeric") {
-        stop("xmin and xmax must be and integer positive")
+    if (class(nmin) != "numeric" || class(nmax) != "numeric") {
+        stop("nmin and nmax must be and integer positive")
     }
-    if (xmin < 0 || xmax < 1) {
-        stop("xmin and xmax must be and integer positive")
+    if (nmin < 0 || nmax < 1) {
+        stop("nmin and nmax must be and integer positive")
+    }
+    if (class(n_max) != "numeric" || n_max < 1) {
+        stop("n_max must be and integer positive")
     }
 
-    dmin <- as.Date(sprintf("%04d-%02d-%02d", xmin,  1,  1), format="%Y-%m-%d")
-    dmax <- as.Date(sprintf("%04d-%02d-%02d", xmax, 12, 31), format="%Y-%m-%d")
+    dmin <- as.Date(sprintf("%04d-%02d-%02d", nmin,  1,  1), format="%Y-%m-%d")
+    dmax <- as.Date(sprintf("%04d-%02d-%02d", nmax, 12, 31), format="%Y-%m-%d")
 
     if (!(countries[1] == "")) {
-        filter(df, COUNTRY %in% countries)  %>%
-            ggplot() +
-            geom_timeline_label(aes(x=DATE
-                              ,y=COUNTRY
-                              ,colour=DEATHS
-                              ,size=RITCHER
-                              ,fill=DEATHS
-                              ,xmin = dmin
-                              ,xmax = dmax
-                              ,namx = namx)
+        dplyr::filter(df, COUNTRY %in% countries)  %>%
+            ggplot2::ggplot() +
+            geom_timeline_label(ggplot2::aes(x=DATE,
+                                    y=COUNTRY,
+                                    colour=DEATHS,
+                                    size=RITCHER,
+                                    fill=DEATHS,
+                                    xmin = dmin,
+                                    xmax = dmax,
+                                    n_max = n_max)
             ) +
-            scale_size_continuous(name = "Richter scale values") +
-            scale_fill_continuous(name = "# Deaths") +
-            scale_colour_continuous(name = "# Deaths") +
-            scale_alpha_continuous(name = "# Deaths")  +
+            ggplot2::scale_size_continuous(name = "Richter scale values") +
+            ggplot2::scale_fill_continuous(name = "# Deaths") +
+            ggplot2::scale_colour_continuous(name = "# Deaths") +
+            ggplot2::scale_alpha_continuous(name = "# Deaths")  +
             theme_timeline +
-            xlab("DATE")
+            ggplot2::xlab("DATE")
     } else {
-        ggplot(df) +
-            geom_timeline_label(aes(x=DATE
-                              ,colour=DEATHS
-                              ,size=RITCHER
-                              ,fill=DEATHS
-                              ,xmin = dmin
-                              ,xmax = dmax
-                              ,namx = namx)
+        ggplot2::ggplot(df) +
+            geom_timeline_label(ggplot2::aes(x=DATE,
+                                    colour=DEATHS,
+                                    size=RITCHER,
+                                    fill=DEATHS,
+                                    xmin = dmin,
+                                    xmax = dmax,
+                                    n_max = n_max)
             )
-            scale_size_continuous(name = "Richter scale values") +
-            scale_fill_continuous(name = "# Deaths") +
-            scale_colour_continuous(name = "# Deaths") +
-            scale_alpha_continuous(name = "# Deaths") +
+            ggplot2::scale_size_continuous(name = "Richter scale values") +
+            ggplot2::scale_fill_continuous(name = "# Deaths") +
+            ggplot2::scale_colour_continuous(name = "# Deaths") +
+            ggplot2::scale_alpha_continuous(name = "# Deaths") +
             theme_timeline +
-            xlab("DATE")
+            ggplot2::xlab("DATE")
     }
 }
 
