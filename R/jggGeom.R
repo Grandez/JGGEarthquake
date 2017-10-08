@@ -1,5 +1,6 @@
 require(ggplot2)
 require(grid)
+require(dplyr)
 
 #############################################################################
 #  PUBLIC FUNCTIONS
@@ -101,7 +102,6 @@ geom_timeline <- function(mapping = NULL, data = NULL, stat = "identity",
 #' library(ggplot2)
 #'     ggplot(df) +
 #'     geom_timeline_label(aes(x = DATE,
-#'                             location = LOCATION_NAME,
 #'                             xmin = as.Date("2000-01-01", format="%Y-%m-%d"),
 #'                             xmax = as.Date("2017-01-01", format="%Y-%m-%d"),
 #'                             size=RITCHER,
@@ -111,15 +111,111 @@ geom_timeline <- function(mapping = NULL, data = NULL, stat = "identity",
 geom_timeline_label <- function(mapping = NULL, data = NULL, stat = "identity",
                                 position = "identity", na.rm = FALSE,
                                 show.legend = NA, inherit.aes = TRUE, ...) {
-  ggplot2::layer(
-    geom = geomTimelineLabel, stat = StatTimeline, mapping = mapping,
-    data = data,  position = position,
-    show.legend = show.legend, inherit.aes = inherit.aes,
-    params = list(na.rm = na.rm, ...)
-  )
+    ggplot2::layer(
+        stat = StatTimeline, geom = GeomTimelineLabel, mapping = mapping,
+        data = data,  position = position,
+        show.legend = show.legend, inherit.aes = inherit.aes,
+        params = list(na.rm = na.rm, ...)
+    )
+
+    #  ggplot2::layer(
+    #geom = geomTimelineLabel, stat = StatTimeline, mapping = mapping,
+    #data = data,  position = position,
+    #show.legend = show.legend, inherit.aes = inherit.aes,
+    #params = list(na.rm = na.rm, ...)
+  #)
 }
 
 
+#' eq_map
+#'
+#' A function to generate an interactive map showing earthquakes.
+#' The user specifies a column from the data which the earthquake is to be annotated by eg DATE.
+#'
+#' @param dt A data table containing NOAA Earthquake data cleaned
+#' @param annot_col A column found in \code{eq_data} to annotate earthquake marker
+#' @importFrom leaflet leaflet
+#' @importFrom leaflet addTiles
+#' @importFrom leaflet addCircleMarkers
+#'
+#' @return An interactive map displaying earthquate location for a given country with user defined popup.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(dplyr)
+#' library(lubridate)
+#' dt <- eq_clean_data %>% filter(COUNTRY == "MEXICO" & lubridate::year(date) >= 2000)
+#' eq_map(dt, annot_col="DATE")
+#'}
+eq_map <- function(dt, annot_col) {
+
+    leaflet() %>% addTiles() %>%
+                  addCircleMarkers(data=dt, lng = ~ LONGITUDE, lat = ~ LATITUDE,
+                                   radius = ~RITCHER, popup = annot_col)
+}
+
+#' eq_create_label
+#'
+#' A function to generate a custom popup box for a selected earthquake showing location,
+#' magnitude and total deaths.
+#'
+#' @param dt A data table containing NOAA Earthquake data cleaned
+#'
+#' @return An interactive map displaying earthquate location for a given country with custom popup.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#'  eq_create_label(dt)) %>% eq_map(annot_col="DATE")
+#'}
+#'
+eq_create_label <- function(dt) {
+    loc   <- paste("<b>Location:</b>", dt$LOCATION_NAME, "<br />")
+    mag   <- paste("<b>Magnitude:</b>", dt$EQ_PRIMARY, "<br />")
+    death <- paste("<b>Total deaths:</b>", dt$TOTAL_DEATHS, "<br />")
+    out <- paste(loc,mag,death)
+    return(out)
+}
+
+
+GeomTimeline <- ggproto("GeomTimeline", GeomPoint,
+                        required_aes = c("x"),
+                        optional_aes = c("y", "xmin","xmax", "colour", "fill", "size"),
+                        default_aes = aes(shape = 21
+                                          ,size = 5
+                                          ,colour = "blue"
+                                          ,fill = "blue"
+                                          ,alpha = 0.5
+                                          ,stroke = 1
+                                          ,y = 0.5),
+
+                        draw_key = draw_key_point,
+                        draw_panel = function(data, panel_params, coord, na.rm = FALSE) {
+                            coords <- coord$transform(data, panel_params)
+                            c1 <- pointsGrob(
+                                coords$x, coords$y,
+                                pch = coords$shape,
+                                gp = gpar(
+                                    col = alpha(coords$colour, coords$alpha),
+                                    fill = alpha(coords$fill, coords$alpha),
+                                    # Stroke is added around the outside of the point
+                                    fontsize = coords$size * .pt + coords$stroke * .stroke / 2,
+                                    lwd = coords$stroke * .stroke / 2
+                                )
+                            )
+
+                            c2 <- segmentsGrob(
+                                x0 = unit(coords$xmin,"native"),
+                                x1 = unit(coords$xmax,"native"),
+                                y0 = unit(coords$y,"native"),
+                                y1 = unit(coords$y,"native"),
+                                gp = gpar(col = "grey", alpha = 0.25)
+                            )
+
+                            grobTree(c2, c1)
+                        }
+)
 
 #' geomTimelineLabel
 #' @rdname Earthquake-ggproto
@@ -129,9 +225,79 @@ geom_timeline_label <- function(mapping = NULL, data = NULL, stat = "identity",
 # @importFrom grid textGrob
 # @importFrom grid gTree
 # @importFrom grid gList
-geomTimelineLabel <- ggproto("geomTimelineLable", Geom,
-                              required_aes = c("x","location"),
-                              optional_aes = c("y","n_max"),
+GeomTimelineLabel <- ggproto("GeomTimelineLabel", GeomPoint,
+                        required_aes = c("x"),
+                        optional_aes = c("y", "xmin","xmax", "n_max", "colour", "fill", "size"),
+                        default_aes = aes(shape = 21
+                                          ,size = 5
+                                          ,colour = "blue"
+                                          ,fill = "blue"
+                                          ,alpha = 0.5
+                                          ,stroke = 1
+                                          ,y = 0.5),
+
+                        draw_key = draw_key_point,
+                        draw_panel = function(data, panel_params, coord, na.rm = FALSE) {
+                            data
+                            if ("n_max" %in% names(data)) {
+                                nm <-  data$n_max[1]
+                            } else {
+                                nm <- 0
+                            }
+                            if ("n_max" %in% names(data) & nrow(data) > nm) {
+                                data <- data %>%
+                                    group_by(y) %>%
+                                    top_n(n = data$n_max[1], wt = size)
+                                data
+                            }
+
+                            coords <- coord$transform(data, panel_params)
+                            c1 <- pointsGrob(
+                                coords$x, coords$y,
+                                pch = coords$shape,
+                                gp = gpar(
+                                    col = alpha(coords$colour, coords$alpha),
+                                    fill = alpha(coords$fill, coords$alpha),
+                                    # Stroke is added around the outside of the point
+                                    fontsize = coords$size * .pt + coords$stroke * .stroke / 2,
+                                    lwd = coords$stroke * .stroke / 2
+                                )
+                            )
+
+                            c2 <- segmentsGrob(
+                                x0 = unit(coords$xmin,"native"),
+                                x1 = unit(coords$xmax,"native"),
+                                y0 = unit(coords$y,"native"),
+                                y1 = unit(coords$y,"native"),
+                                gp = gpar(col = "grey", alpha = 0.25)
+                            )
+
+                            # SegmentGrob to draw lines where we will plot our earthquake points
+                            c3 <- segmentsGrob(
+                                x0 = unit(coords$x,"native"),
+                                x1 = unit(coords$x,"native"),
+                                y0 = unit(coords$y,"native"),
+                                y1 = unit(coords$y + 0.1,"native"),
+                                gp = gpar(col = "grey", alpha = 0.75)
+                            )
+
+                            # textGrob to print location
+                            c4 <- textGrob(
+                                  label = coords$location,
+                                  x = unit(coords$x,"native"),
+                                  y = unit(coords$y + 0.12,"native"),
+                                  rot = 45,
+                                  just = "left",
+                                  gp = gpar(fontsize = 8)
+                            )
+
+                            grobTree(c1, c2, c3, c4)
+                        }
+)
+
+geomTimelineLabel2 <- ggproto("geomTimelineLabel2", Geom,
+                              required_aes = c("x"),
+                              optional_aes = c("y", "xmin","xmax", "n_max", "colour", "fill", "size"),
                               default_aes = aes(size =0, y = 0.5, fontsize = 8, alpha = 0.75, colour = "blue", fill = "blue"),
                               draw_key = draw_key_blank,
                               draw_panel = function(data, panel_scales, coord) {
@@ -150,8 +316,20 @@ geomTimelineLabel <- ggproto("geomTimelineLable", Geom,
 
                                         coords <- coord$transform(data, panel_scales)
 
+                                        c1 <- pointsGrob(
+                                            coords$x, coords$y,
+                                            pch = coords$shape,
+                                            gp = gpar(
+                                                col = alpha(coords$colour, coords$alpha),
+                                                fill = alpha(coords$fill, coords$alpha),
+                                                # Stroke is added around the outside of the point
+                                         #       fontsize = coords$size * .pt + coords$stroke * .stroke / 2,
+                                                lwd = coords$stroke * .stroke / 2
+                                            )
+                                        )
+
                                         # SegmentGrob to draw lines where we will plot our earthquake points
-                                        seg_grob <- grid::segmentsGrob(
+                                        c2 <- segmentsGrob(
                                           x0 = unit(coords$x,"native"),
                                           x1 = unit(coords$x,"native"),
                                           y0 = unit(coords$y,"native"),
@@ -159,16 +337,16 @@ geomTimelineLabel <- ggproto("geomTimelineLable", Geom,
                                           gp = gpar(col = "grey", alpha = 0.75)
                                         )
                                         # textGrob to print location
-                                        text_grob <- textGrob(
-                                          label = coords$location,
-                                          x = unit(coords$x,"native"),
-                                          y = unit(coords$y + 0.06,"native"),
-                                          rot = 45,
-                                          just = "left",
-                                          gp = gpar(fontsize = 8)
-                                        )
+                                        #c3 <- textGrob(
+                                        #  label = coords$location,
+                                        #  x = unit(coords$x,"native"),
+                                        #  y = unit(coords$y + 0.06,"native"),
+                                        #  rot = 45,
+                                        #  just = "left",
+                                        #  gp = gpar(fontsize = 8)
+                                        #)
                                         # group our grobs together for output
-                                        gTree(children = gList(seg_grob,text_grob))
+                                        gTree(children = gList(c1,c2))
                                       })
 
 
@@ -181,57 +359,19 @@ StatTimeline <- ggproto("StatTimeline", Stat
                         ,optional_aes=c("xmin", "xmax")
                         # ,default_aes = aes(xmin=NA, xmax=NA)
                         ,setup_params = function(data, params) {
-                            dmin = if ("xmin" %in% names(data))  data$xmin else min(data$x)
-                            dmax = if ("xmax" %in% names(data))  data$xmax else max(data$x)
+                            xmin = if ("xmin" %in% names(data))  data$xmin else min(data$x)
+                            xmax = if ("xmax" %in% names(data))  data$xmax else max(data$x)
                             list(
-                                min = dmin,
-                                max = dmax,
+                                min = xmin,
+                                max = xmax,
                                 na.rm = TRUE
                             )
                         }
-                        ,compute_group = function(data, scales, min, max) {
-                            data %>% filter(data$x >= min & data$x <= max)
+                        ,compute_group = function(data, scales, xmin, xmax) {
+                            data %>% filter(data$x >= xmin & data$x <= xmax)
                         }
 )
 
-GeomTimeline <- ggproto("GeomTimeline", GeomPoint,
-                        required_aes = c("x"),
-                        optional_aes = c("y", "xmin","xmax", "colour", "fill", "size"),
-                        default_aes = aes(shape = 21
-                                         ,size = 5
-                                         ,colour = "blue"
-                                         ,fill = "blue"
-                                         ,alpha = 0.5
-                                         ,stroke = 1
-                                         ,y = 0.5),
-
-                        #non_missing_aes = c("size", "shape", "colour"),
-                        #default_aes = aes(y=0.5,
-                        #                  shape = 21, colour = "gray", fill=NA, size = 1.5,
-                        #                  alpha = NA, stroke = 0.5
-                        #),
-                        draw_key = draw_key_point,
-                        draw_panel = function(data, panel_params, coord, na.rm = FALSE) {
-                            coords <- coord$transform(data, panel_params)
-                            c1 <- pointsGrob(
-                                coords$x, coords$y,
-                                pch = coords$shape,
-                                gp = gpar(
-                                    col = alpha(coords$colour, coords$alpha),
-                                    fill = alpha(coords$fill, coords$alpha),
-                                    # Stroke is added around the outside of the point
-                                    fontsize = coords$size * .pt + coords$stroke * .stroke / 2,
-                                    lwd = coords$stroke * .stroke / 2
-                                )
-                            )
-
-                            c2 <- linesGrob(
-                                y=unit(c(coords$y, coords$y),"npc"),
-                                gp = gpar(col="black", lwd = 2)
-                            )
-                            grobTree(c2, c1)
-                        }
-)
 
 #' theme_timeline
 #' @rdname Earthquake-theme

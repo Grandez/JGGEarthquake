@@ -12,7 +12,7 @@
 
 <meta name="author" content="Javier Gonzalez &lt;javier.gonzalez.grandez@gmail.com" />
 
-<meta name="date" content="2017-10-06" />
+<meta name="date" content="2017-10-08" />
 
 <title>jggEarthquake</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">jggEarthquake</h1>
 <h4 class="author"><em>Javier Gonzalez &lt;<a href="mailto:javier.gonzalez.grandez@gmail.com">javier.gonzalez.grandez@gmail.com</a></em></h4>
-<h4 class="date"><em>2017-10-06</em></h4>
+<h4 class="date"><em>2017-10-08</em></h4>
 
 
 
@@ -163,13 +163,8 @@ data_clean &lt;-<span class="st"> </span><span class="kw">eq_load_data</span>(<s
 <li>xmax = End of year, by default the last Earthquake in data set</li>
 </ul>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(data_clean) <span class="op">+</span>
-<span class="st">     </span><span class="kw">geom_timeline</span>(<span class="kw">aes</span>(<span class="dt">x=</span>date
-                      ,<span class="dt">y=</span>COUNTRY
-                      ,<span class="dt">colour=</span>DEATHS
-                      ,<span class="dt">fill=</span>DEATHS
-                      ,<span class="dt">size=</span>RITCHER
-                      ,<span class="dt">xmin =</span> <span class="dv">2000</span>
-                      ,<span class="dt">xmax =</span> <span class="dv">2016</span>
+<span class="st">     </span><span class="kw">geom_timeline</span>(<span class="kw">aes</span>(<span class="dt">x=</span>DATE,<span class="dt">colour=</span>DEATHS,<span class="dt">fill=</span>DEATHS,<span class="dt">size=</span>RITCHER,
+                       <span class="dt">xmin =</span> <span class="dv">2000</span>,<span class="dt">xmax =</span> <span class="dv">2016</span>
                       )
                   )</code></pre></div>
 <div id="geom_timeline_label" class="section level4">
@@ -184,15 +179,8 @@ data_clean &lt;-<span class="st"> </span><span class="kw">eq_load_data</span>(<s
 <li>xmax = End of year, by default the last Earthquake in data set</li>
 </ul>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(data_clean) <span class="op">+</span>
-<span class="st">     </span><span class="kw">geom_timeline_label</span>(<span class="kw">aes</span>(<span class="dt">x=</span>date
-                      ,<span class="dt">y=</span>COUNTRY
-                      ,<span class="dt">colour=</span>DEATHS
-                      ,<span class="dt">fill=</span>DEATHS
-                      ,<span class="dt">size=</span>RITCHER
-                      ,<span class="dt">xmin =</span> <span class="dv">2000</span>
-                      ,<span class="dt">xmax =</span> <span class="dv">2016</span>
-                      ,<span class="dt">nmax =</span> <span class="dv">5</span>
-                      )
+<span class="st">     </span><span class="kw">geom_timeline_label</span>(<span class="kw">aes</span>(<span class="dt">x=</span>DATE, <span class="dt">colour=</span>DEATHS, <span class="dt">fill=</span>DEATHS, <span class="dt">size=</span>RITCHER,
+                             <span class="dt">xmin =</span> <span class="dv">2000</span>, <span class="dt">xmax =</span> <span class="dv">2016</span>,<span class="dt">nmax =</span> <span class="dv">5</span>)
                   )</code></pre></div>
 </div>
 <div id="eq_geom_timeline" class="section level4">

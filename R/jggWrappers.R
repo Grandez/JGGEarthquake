@@ -130,9 +130,10 @@ eq_geom_timeline_label <- function(df, nmin=1,
     dmin <- as.Date(sprintf("%04d-%02d-%02d", nmin,  1,  1), format="%Y-%m-%d")
     dmax <- as.Date(sprintf("%04d-%02d-%02d", nmax, 12, 31), format="%Y-%m-%d")
 
-    if (!(countries[1] == "")) {
-        dplyr::filter(df, COUNTRY %in% countries)  %>%
-            ggplot2::ggplot() +
+
+    data = if (!(countries[1] == "")) filter(df, COUNTRY %in% countries) else df
+
+    ggplot2::ggplot(df) +
             geom_timeline_label(ggplot2::aes(x=DATE,
                                     y=COUNTRY,
                                     colour=DEATHS,
@@ -148,23 +149,6 @@ eq_geom_timeline_label <- function(df, nmin=1,
             ggplot2::scale_alpha_continuous(name = "# Deaths")  +
             theme_timeline +
             ggplot2::xlab("DATE")
-    } else {
-        ggplot2::ggplot(df) +
-            geom_timeline_label(ggplot2::aes(x=DATE,
-                                    colour=DEATHS,
-                                    size=RITCHER,
-                                    fill=DEATHS,
-                                    xmin = dmin,
-                                    xmax = dmax,
-                                    n_max = n_max)
-            )
-            ggplot2::scale_size_continuous(name = "Richter scale values") +
-            ggplot2::scale_fill_continuous(name = "# Deaths") +
-            ggplot2::scale_colour_continuous(name = "# Deaths") +
-            ggplot2::scale_alpha_continuous(name = "# Deaths") +
-            theme_timeline +
-            ggplot2::xlab("DATE")
-    }
 }
 
 

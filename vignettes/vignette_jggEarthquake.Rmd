@@ -123,13 +123,8 @@ Aesthetics supported:
 
 ```R
 ggplot(data_clean) +
-     geom_timeline(aes(x=date
-                      ,y=COUNTRY
-                      ,colour=DEATHS
-                      ,fill=DEATHS
-                      ,size=RITCHER
-                      ,xmin = 2000
-                      ,xmax = 2016
+     geom_timeline(aes(x=DATE,colour=DEATHS,fill=DEATHS,size=RITCHER,
+                       xmin = 2000,xmax = 2016
                       )
                   )
 ```
@@ -149,15 +144,8 @@ Aesthetics supported:
 
 ```R
 ggplot(data_clean) +
-     geom_timeline_label(aes(x=date
-                      ,y=COUNTRY
-                      ,colour=DEATHS
-                      ,fill=DEATHS
-                      ,size=RITCHER
-                      ,xmin = 2000
-                      ,xmax = 2016
-                      ,nmax = 5
-                      )
+     geom_timeline_label(aes(x=DATE, colour=DEATHS, fill=DEATHS, size=RITCHER,
+                             xmin = 2000, xmax = 2016,nmax = 5)
                   )
 ```
 
