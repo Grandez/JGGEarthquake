@@ -1,5 +1,5 @@
 ---
-title: "jggEarthquake"
+title: "JGGEarthquake"
 author: "Javier Gonzalez <javier.gonzalez.grandez@gmail.com"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
